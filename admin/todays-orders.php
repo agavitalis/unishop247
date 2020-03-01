@@ -66,45 +66,44 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
 									<thead>
 										<tr>
 											<th>#</th>
-											<th> Name</th>
-											<th width="50">Email /Contact no</th>
-											<th>Delivery Address</th>
-											<th>Product </th>
-											<th>Qty </th>
-											<th>Amount </th>
+											<th>Order Code</th>
+											<th>Name</th>
+											<th>Email</th>
+											<th>Contact no </th>
 											<th>Order Date</th>
-											<th>Action</th>
-											
-										
+											<th>View Details</th>			
 										</tr>
 									</thead>
 								
 <tbody>
 <?php 
- $f1="00:00:00";
+$f1="00:00:00";
 $from=date('Y-m-d')." ".$f1;
 $t1="23:59:59";
 $to=date('Y-m-d')." ".$t1;
-$query=mysqli_query($con,"select users.name as username,users.email as useremail,users.contactno as usercontact,users.shippingAddress as shippingaddress,users.shippingCity as shippingcity,users.shippingState as shippingstate,users.shippingPincode as shippingpincode,products.productName as productname,products.shippingCharge as shippingcharge,orders.quantity as quantity,orders.orderDate as orderdate,products.productPrice as productprice,orders.id as id  from orders join users on  orders.userId=users.id join products on products.id=orders.productId where orders.orderDate Between '$from' and '$to'");
+$query_string ="SELECT *
+		FROM users
+		INNER JOIN orders
+		ON users.id=orders.userId
+		WHERE orders.orderDate BETWEEN '$from' AND '$to'
+		GROUP BY orderCode";
+$query=mysqli_query($con,$query_string);
 $cnt=1;
-while($row=mysqli_fetch_array($query))
-{
-?>										
-										<tr>
-											<td><?php echo htmlentities($cnt);?></td>
-											<td><?php echo htmlentities($row['username']);?></td>
-											<td><?php echo htmlentities($row['useremail']);?>/<?php echo htmlentities($row['usercontact']);?></td>
-										
-											<td><?php echo htmlentities($row['shippingaddress'].",".$row['shippingcity'].",".$row['shippingstate']."-".$row['shippingpincode']);?></td>
-											<td><?php echo htmlentities($row['productname']);?></td>
-											<td><?php echo htmlentities($row['quantity']);?></td>
-											<td><?php echo htmlentities($row['quantity']*$row['productprice']+$row['shippingcharge']);?></td>
-											<td><?php echo htmlentities($row['orderdate']);?></td>
-											<td>    <a href="updateorder.php?oid=<?php echo htmlentities($row['id']);?>" title="Update order" target="_blank"><i class="icon-edit"></i></a>
-											</td>
-											</tr>
+											while($row=mysqli_fetch_array($query))
+											{
+											?>										
+												<tr>
+													<td><?php echo htmlentities($cnt);?></td>
+													<td><?php echo htmlentities($row['orderCode']);?></td>
+													<td><?php echo htmlentities($row['name']);?>/<?php echo htmlentities($row['contactno']);?></td>
+													<td><?php echo htmlentities($row['email']);?></td>
+													<td><?php echo htmlentities($row['contactno']);?></td>
+													<td><?php echo htmlentities($row['orderDate']);?></td>
+													<td> <a href="order-details.php?ocode=<?php echo htmlentities($row['orderCode']);?>" title="View Details" target="_blank">View Details</a></td>
+													
+												</tr>
 
-										<?php $cnt=$cnt+1; } ?>
+											<?php $cnt=$cnt+1; } ?>
 										</tbody>
 								</table>
 							</div>

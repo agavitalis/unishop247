@@ -88,52 +88,51 @@ header('location:login.php');
 			<div class="shopping-cart">
 				<div class="col-md-12 col-sm-12 shopping-cart-table ">
 	<div class="table-responsive">
-<form name="cart" method="post">	
 
-		<table class="table table-bordered">
+		<table class="table table-bordered table-striped">
 			<thead>
 				<tr>
-					<th class="cart-romove item">#</th>
-					<th class="cart-description item">Name</th>
-					<th class="cart-product-name item">Email Address</th>
+					<th>#</th>
+					<th>Name</th>
+					<th>Email Address</th>
 			
 				</tr>
 			</thead><!-- /thead -->
 			
 			<tbody>
 
-<?php $query=mysqli_query($con,"select * from users where referral ='".$_SESSION['id']."'");
-$cnt=1;
-$num=mysqli_num_rows($query);
-if($num>0)
-{
-while($row=mysqli_fetch_array($query))
-{
-?>
+					<?php
+					$query=mysqli_query($con,"select * from users where referral ='".$_SESSION['login']."'");
+					$cnt=1;
+					$num=mysqli_num_rows($query);
+					if($num>0)
+					{
+					while($row=mysqli_fetch_array($query))
+					{
+					?>
 				<tr>
 					<td><?php echo $cnt;?></td>
-					
-					
-					<td class="cart-product-quantity">
+				
+					<td>
 						<?php echo $qty=$row['name']; ?>   
 		            </td>
-                    <td class="cart-product-quantity">
+                    <td>
 						<?php echo $qty=$row['email']; ?>   
 		            </td>
-					
-					
-					
+		
 				</tr>
-<?php
- $cnt=$cnt+1;}
- ?>
-<tr>
-	<td colspan="9"><div class="cart-checkout-btn pull-right">
-							<button type="submit" name="ordersubmit" class="btn btn-primary"><a href="payment-method.php">View My Bonus</a></button>
+				<?php
+				$cnt=$cnt+1;}
+				?>
+				<tr>
+					<td colspan="9">
+						<div class="cart-checkout-btn pull-right">
+							<button class="btn btn-primary"><a href="my-bonus.php">View My Bonus</a></button>
 						
-						</div></td>
+						</div>
+					</td>
 
-</tr>
+				</tr>
 <?php } else {?>
 <tr>
 <td colspan="10" align="center"><h4>You have not made referrals yet</h4></td>
@@ -149,7 +148,7 @@ while($row=mysqli_fetch_array($query))
 
 		</div><!-- /.shopping-cart -->
 		</div> <!-- /.row -->
-		</form>
+		
 		<!-- ============================================== BRANDS CAROUSEL ============================================== -->
 <?php echo include('includes/brands-slider.php');?>
 <!-- ============================================== BRANDS CAROUSEL : END ============================================== -->	</div><!-- /.container -->

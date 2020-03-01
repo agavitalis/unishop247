@@ -11,18 +11,73 @@
     $orderCode = 0;
   }
 
+  if(isset($_GET['userId'])){
+    $userId = $_GET['userId'];
+  }else{
+    $userId = 0;
+  }
+
  
   if (isset($_POST['change_status'])) {
 
       $status = $_POST['status'];
       $orderCode = $_POST['orderCode'];
       $remark = $_POST['remark'];
+      $totalAmontRef = $_POST['totalAmontRef'];
+      $user = $_POST['userId'];
+     
 
       //calculate the guys bonus here
       if($status == "Delivered"){
+          //check if this referal bonus have been credited
+          $query = mysqli_query($con, "Select * from orders where orderCode = '$orderCode' and referralCalculation = 0");
+          $query_count = mysqli_num_rows($query);
+          
+          //calculate for bonus
+        if($query_count >= 1){
 
+          //get the current rate
+          $rate_query = mysqli_query($con, "Select * from bonus where active = 1");
+          $row = mysqli_fetch_assoc($rate_query);
+          $referal_percent = $row['percent'];
 
+          $referal_bonus = ($referal_percent/100) * $totalAmontRef;
+
+          //update the ref cal or orders cable
+          mysqli_query($con, "update orders set referralCalculation=1 where orderCode='$orderCode'");
+          
+          //credit the referral
+          $user_query = mysqli_query($con, "Select * from users where id = '$user'");
+          // if (!$user_query) {
+          //   die("Error description: " . mysqli_error($con));
+          // }
+          $user_row = mysqli_fetch_assoc($user_query);
+          $referral = $user_row['referral'];
+          
+         
+
+          if($referral != Null){
+            //credit the referral guy and give him a coupon
+            //generate a unique order code
+            $characters = 'ABCDEFHJKLMNPQRSTUVWXYZ123456789';
+            $charactersLength = strlen($characters);
+            $randomString = '';
+            for ($i = 0; $i < 10; $i++) {
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+            }
+            $couponCode=$randomString; 
+            
+            $xx = mysqli_query($con, "update users set referralBonus = referralBonus + '$referal_bonus', referralCoupon= '$couponCode'  where email = '$referral' ");
+            if (!$xx) {
+            die("Error description: " . mysqli_error($con));
+          }
+          }
+         
+            
+        }
+       
       }
+      
 
       //then update this order
       $query = mysqli_query($con, "insert into ordertrackhistory(orderCode,status,remark) values('$orderCode','$status','$remark')");
@@ -76,7 +131,9 @@
 									</thead>
 
                     <tbody>
-                      <?php $query=mysqli_query($con,"select products.productImage1 as 
+                      <?php 
+                      $grandTT =$grandPP = 0;
+                      $query=mysqli_query($con,"select products.productImage1 as 
                       pimg1,products.productName as pname,products.id as proid,orders.productId 
                       as opid,orders.quantity as qty,products.productPrice as
                       pprice,products.shippingCharge as shippingcharge,orders.paymentMethod as
@@ -99,22 +156,36 @@
                           
                           
                         </td>
-                        <td class="cart-product-quantity">
-                          <?php echo $qty=$row['qty']; ?>   
-                              </td>
-                                          <td class="cart-product-sub-total"><?php echo "&#8358;".number_format( $price=$row['pprice']); ?>  </td>
-                                          <td class="cart-product-sub-total"><?php echo "&#8358;". number_format($shippcharge=$row['shippingcharge']) ; ?>  </td>
+                        <td class="cart-product-quantity"><?php echo $qty=$row['qty']; ?>  </td>                      
+                        <td class="cart-product-sub-total"><?php echo "&#8358;".number_format( $price=$row['pprice']); ?>  </td>
+                        <td class="cart-product-sub-total"><?php echo "&#8358;". number_format($shippcharge=$row['shippingcharge']) ; ?>  </td>
                         <td class="cart-product-grand-total"><?php echo "&#8358;". number_format(($qty*$price)+$shippcharge);?></td>
+                        <?php
+                              //to be used in referall bonus calculation
+                              $grandT = $qty*$price;
+                              $grandTT =  $grandTT + $grandT;
+
+                              //total amonunt to be paid
+                              $grandP = ($qty*$price)+$shippcharge;
+                              $grandPP =  $grandPP + $grandP;
+                        ?>
                         <td class="cart-product-sub-total"><?php echo $row['paym']; ?>  </td>
                         <td class="cart-product-sub-total"><?php echo $row['odate']; ?>  </td>
                         
                         
                       </tr>
                       <?php $cnt=$cnt+1;} ?>
-										</tbody>
+                     
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                          <th colspan="6">Price Total </th>
+                          <th colspan="3"><?php echo "&#8358;".$grandPP; ?></th>
+                          
+                      </tr>
+                  </tfoot>
 								</table>
 							</div>
-              <hr>
              
 						</div>
           </div><!--/.content-->
@@ -135,6 +206,8 @@
                   </select>
                   <textarea name="remark" ></textarea>
                   <input type="hidden" name="orderCode" value="<?php echo $orderCode; ?>">
+                  <input type="hidden" name="totalAmontRef" value="<?php echo $grandTT; ?>">
+                  <input type="hidden" name="userId" value="<?php echo $userId; ?>">
                   <button type="submit" name="change_status" class="btn btn-danger">Submit</button>
                 </form>
               </div>

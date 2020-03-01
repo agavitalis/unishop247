@@ -99,8 +99,8 @@ $cnt=1;
 													<td><?php echo htmlentities($row['email']);?></td>
 													<td><?php echo htmlentities($row['contactno']);?></td>
 													<td><?php echo htmlentities($row['orderDate']);?></td>
-													<td> <a href="order-details.php?ocode=<?php echo htmlentities($row['orderCode']);?>" title="View Details" target="_blank">View Details</a></td>
-													
+													<td> <a href="order-details.php?ocode=<?php echo htmlentities($row['orderCode']);?>&userId=<?php echo htmlentities($row['userId']);?>" title="View Details" target="_blank">View Details</a></td>
+											
 												</tr>
 
 											<?php $cnt=$cnt+1; } ?>

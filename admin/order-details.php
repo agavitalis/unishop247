@@ -4,10 +4,31 @@
   if (strlen($_SESSION['alogin']) == 0) {
       header('location:index.php');
   }
+
   if(isset($_GET['ocode'])){
     $orderCode = $_GET['ocode'];
   }else{
     $orderCode = 0;
+  }
+
+ 
+  if (isset($_POST['change_status'])) {
+
+      $status = $_POST['status'];
+      $orderCode = $_POST['orderCode'];
+      $remark = $_POST['remark'];
+
+      //calculate the guys bonus here
+      if($status == "Delivered"){
+
+
+      }
+
+      //then update this order
+      $query = mysqli_query($con, "insert into ordertrackhistory(orderCode,status,remark) values('$orderCode','$status','$remark')");
+      $sql = mysqli_query($con, "update orders set orderStatus='$status' where orderCode='$orderCode'");
+      echo "<script>alert('Order Status sucessfully Changed...');</script>";
+
   }
  
 ?>
@@ -31,7 +52,7 @@
 		<div class="container">
 			<div class="row">
         <?php include 'include/sidebar.php';?>
-			<div class="span9">
+		 	 <div class="span9">
 					<div class="content">
           	<div class="module">
 							<div class="module-head">
@@ -55,48 +76,73 @@
 									</thead>
 
                     <tbody>
-      <?php $query=mysqli_query($con,"select products.productImage1 as 
-      pimg1,products.productName as pname,products.id as proid,orders.productId 
-      as opid,orders.quantity as qty,products.productPrice as
-       pprice,products.shippingCharge as shippingcharge,orders.paymentMethod as
-        paym,orders.orderDate as odate,orders.id as orderid from orders join products
-         on orders.productId=products.id where orders.orderCode='$orderCode'");
-      $cnt=1;
-      while($row=mysqli_fetch_array($query))
-      {
-      ?>
-				<tr>
-					<td><?php echo $cnt;?></td>
-					<td class="cart-image">
-						<a class="entry-thumbnail" href="product-details.php?pid=<?php echo $row['opid'];?>">
-						    <img src="productimages/<?php echo $row['proid'];?>/<?php echo $row['pimg1'];?>" alt="" width="84" height="84">
-						</a>
-					</td>
-					<td class="cart-product-name-info">
-						<h4 class='cart-product-description'><a href="product-details.php?id=<?php echo $row['opid'];?>">
-						<?php echo $row['pname'];?></a></h4>
-						
-						
-					</td>
-					<td class="cart-product-quantity">
-						<?php echo $qty=$row['qty']; ?>   
-		            </td>
-                            <td class="cart-product-sub-total"><?php echo "&#8358;".number_format( $price=$row['pprice']); ?>  </td>
-                            <td class="cart-product-sub-total"><?php echo "&#8358;". number_format($shippcharge=$row['shippingcharge']) ; ?>  </td>
-					<td class="cart-product-grand-total"><?php echo "&#8358;". number_format(($qty*$price)+$shippcharge);?></td>
-					<td class="cart-product-sub-total"><?php echo $row['paym']; ?>  </td>
-					<td class="cart-product-sub-total"><?php echo $row['odate']; ?>  </td>
-					
-					
-				</tr>
-<?php $cnt=$cnt+1;} ?>
+                      <?php $query=mysqli_query($con,"select products.productImage1 as 
+                      pimg1,products.productName as pname,products.id as proid,orders.productId 
+                      as opid,orders.quantity as qty,products.productPrice as
+                      pprice,products.shippingCharge as shippingcharge,orders.paymentMethod as
+                        paym,orders.orderDate as odate,orders.id as orderid from orders join products
+                        on orders.productId=products.id where orders.orderCode='$orderCode'");
+                      $cnt=1;
+                      while($row=mysqli_fetch_array($query))
+                      {
+                      ?>
+                      <tr>
+                        <td><?php echo $cnt;?></td>
+                        <td class="cart-image">
+                          <a class="entry-thumbnail" href="product-details.php?pid=<?php echo $row['opid'];?>">
+                              <img src="productimages/<?php echo $row['proid'];?>/<?php echo $row['pimg1'];?>" alt="" width="84" height="84">
+                          </a>
+                        </td>
+                        <td class="cart-product-name-info">
+                          <h4 class='cart-product-description'><a href="product-details.php?id=<?php echo $row['opid'];?>">
+                          <?php echo $row['pname'];?></a></h4>
+                          
+                          
+                        </td>
+                        <td class="cart-product-quantity">
+                          <?php echo $qty=$row['qty']; ?>   
+                              </td>
+                                          <td class="cart-product-sub-total"><?php echo "&#8358;".number_format( $price=$row['pprice']); ?>  </td>
+                                          <td class="cart-product-sub-total"><?php echo "&#8358;". number_format($shippcharge=$row['shippingcharge']) ; ?>  </td>
+                        <td class="cart-product-grand-total"><?php echo "&#8358;". number_format(($qty*$price)+$shippcharge);?></td>
+                        <td class="cart-product-sub-total"><?php echo $row['paym']; ?>  </td>
+                        <td class="cart-product-sub-total"><?php echo $row['odate']; ?>  </td>
+                        
+                        
+                      </tr>
+                      <?php $cnt=$cnt+1;} ?>
 										</tbody>
 								</table>
 							</div>
+              <hr>
+             
 						</div>
-					</div><!--/.content-->
-				</div><!--/.span9-->
-			</div>
+          </div><!--/.content-->
+         
+            <div class="row">
+            
+              <div class="span6">Level 2</div>
+              <div class="span3">
+                <h5>Change Status</h5>
+                <form action="" method="post">
+                  <select name="status" class="fontkink" required="required" >
+                    <option value="">Select Status</option>
+                    <option value="In Process">In Process</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Archived">Archived</option>
+                
+                  </select>
+                  <textarea name="remark" ></textarea>
+                  <input type="hidden" name="orderCode" value="<?php echo $orderCode; ?>">
+                  <button type="submit" name="change_status" class="btn btn-danger">Submit</button>
+                </form>
+              </div>
+            </div>
+         
+        </div><!--/.span9-->
+        
+      </div>
 		</div><!--/.container-->
 	</div><!--/.wrapper-->
 

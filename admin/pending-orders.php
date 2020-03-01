@@ -78,12 +78,11 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
 								
 <tbody>
 <?php 
-$status='Delivered';
 $query_string ="SELECT *
 		FROM users
 		INNER JOIN orders
 		ON users.id=orders.userId
-		WHERE orderStatus!='$status' OR orders.orderStatus IS NULL
+		WHERE orders.orderStatus IS NULL
 		GROUP BY orderCode";
 $query=mysqli_query($con,$query_string);
 $cnt=1;

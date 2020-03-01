@@ -49,7 +49,7 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
 
 	<div class="module">
 							<div class="module-head">
-								<h3>Delivered Orders</h3>
+								<h3>Orders On Hold</h3>
 							</div>
 							<div class="module-body table">
 	<?php if(isset($_GET['del']))
@@ -78,7 +78,7 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
 								
 <tbody>
 <?php 
-$status='Delivered';
+$status='On Hold';
 $query_string ="SELECT *
 		FROM users
 		INNER JOIN orders

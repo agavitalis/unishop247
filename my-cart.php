@@ -1,65 +1,121 @@
-<?php 
+<?php
 session_start();
 error_reporting(0);
-include('includes/config.php');
-if(isset($_POST['submit'])){
-		if(!empty($_SESSION['cart'])){
-		foreach($_POST['quantity'] as $key => $val){
-			if($val==0){
-				unset($_SESSION['cart'][$key]);
-			}else{
-				$_SESSION['cart'][$key]['quantity']=$val;
+include 'includes/config.php';
+if (isset($_POST['submit'])) {
+    if (!empty($_SESSION['cart'])) {
+        foreach ($_POST['quantity'] as $key => $val) {
+            if ($val == 0) {
+                unset($_SESSION['cart'][$key]);
+            } else {
+                $_SESSION['cart'][$key]['quantity'] = $val;
 
-			}
-		}
-			echo "<script>alert('Your Cart hasbeen Updated');</script>";
-		}
-	}
+            }
+        }
+       // echo "<script>alert('Your Cart hasbeen Updated');</script>";
+    }
+}
 // Code for Remove a Product from Cart
-if(isset($_POST['remove_code']))
-	{
+if (isset($_POST['remove_code'])) {
 
-if(!empty($_SESSION['cart'])){
-		foreach($_POST['remove_code'] as $key){
-			
-				unset($_SESSION['cart'][$key]);
-		}
-			echo "<script>alert('Your Cart has been Updated');</script>";
-	}
+    if (!empty($_SESSION['cart'])) {
+        foreach ($_POST['remove_code'] as $key) {
+
+            unset($_SESSION['cart'][$key]);
+        }
+        echo "<script>alert('Your Cart has been Updated');</script>";
+    }
 }
 // code for insert product in order table
+if (isset($_POST['ordersubmit'])) {
 
-
-if(isset($_POST['ordersubmit'])) 
-{
-	
-    if(strlen($_SESSION['login'])==0)
-    {   
+    if (strlen($_SESSION['login']) == 0) {
         header('location:login.php');
-    }
-    else{
+    } else {
 
         $quantity=$_POST['quantity'];
-        $pdd=$_SESSION['pid'];
-        $value=array_combine($pdd,$quantity);
+        $pid=$_SESSION['pid'];
+        $value=array_combine($pid,$quantity);
 
         //generate a unique order code
         $characters = 'ABCDEFHJKLMNPQRSTUVWXYZ123456789';
         $charactersLength = strlen($characters);
         $randomString = '';
-        for ($i = 0; $i < 6; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
-        $orderCode=$randomString; 
 
+        //save the order code in session
+        $orderCode=$randomString;
+        $_SESSION['orderCode'] =$orderCode;
 
-        foreach($value as $qty=> $val34){
+        foreach($value as $pid=> $qty){
 
-            mysqli_query($con,"insert into orders(userId,productId,quantity,orderCode) values('".$_SESSION['id']."','$qty','$val34','$orderCode')");
-            header('location:payment-method.php');
+            //get the current product price
+            $product_query = mysqli_query($con, "Select * from products where id = '$pid'");
+            $product_row = mysqli_fetch_assoc($product_query);
+            $product_price = $product_row['productPrice'];
+            $shipping_charge = $product_row['shippingCharge'];
+
+            mysqli_query($con,"insert into cart(userId,productId,price,shippingCharge,quantity,orderCode) values('".$_SESSION['id']."','$pid','$product_price','$shipping_charge','$qty','$orderCode')");
 
         }
+        header('location:payment-method.php');
     }
+}
+
+if(isset($_POST['applyvoucher'])){
+
+    $email = $_SESSION['login'];
+    $voucher=$_POST['voucher'];
+    $query = mysqli_query($con,"select * from users where referralCoupon = '$voucher' and email ='$email'");
+    $query_count = mysqli_num_rows($query);
+
+    if($query_count < 1){
+        echo "<script>alert('Invalid Coupon Code');</script>";
+    }else{
+
+        $row = mysqli_fetch_assoc($query);
+        $coupon_code = $row['referralCoupon'];
+        $coupon_amount = $row['referralBonus'];
+
+        $_SESSION['referralCoupon'] = $coupon_code;
+        $_SESSION['referralBonus'] = $coupon_amount;
+
+        ////add the products to cart table
+        $quantity=$_POST['quantity'];
+        $pid=$_SESSION['pid'];
+        $value=array_combine($pid,$quantity);
+
+        //generate a unique order code
+        $characters = 'ABCDEFHJKLMNPQRSTUVWXYZ123456789';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < 10; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+
+        //save the order code in session
+        $orderCode=$randomString;
+        $_SESSION['orderCode'] =$orderCode;
+
+        foreach($value as $pid=> $qty){
+
+            //get the current product price
+            $product_query = mysqli_query($con, "Select * from products where id = '$pid'");
+            $product_row = mysqli_fetch_assoc($product_query);
+            $product_price = $product_row['productPrice'];
+            $shipping_charge = $product_row['shippingCharge'];
+
+            mysqli_query($con,"insert into cart(userId,productId,price,shippingCharge,quantity,orderCode) values('".$_SESSION['id']."','$pid','$product_price','$shipping_charge','$qty','$orderCode')");
+
+        }
+
+        header('location:payment-method.php');
+    }
+
+    
+    
 }
 
 
@@ -124,9 +180,9 @@ if(isset($_POST['ordersubmit']))
 
     <!-- ============================================== HEADER ============================================== -->
     <header class="header-style-1">
-        <?php include('includes/top-header.php');?>
-        <?php include('includes/main-header.php');?>
-        <?php include('includes/menu-bar.php');?>
+        <?php include 'includes/top-header.php';?>
+        <?php include 'includes/main-header.php';?>
+        <?php include 'includes/menu-bar.php';?>
     </header>
     <!-- ============================================== HEADER : END ============================================== -->
     <div class="breadcrumb">
@@ -148,87 +204,87 @@ if(isset($_POST['ordersubmit']))
                         <div class="table-responsive">
                             <form name="cart" method="post">
                                 <?php
-if(!empty($_SESSION['cart'])){
-	?>
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th class="cart-romove item">Remove</th>
-                                            <th class="cart-description item">Image</th>
-                                            <th class="cart-product-name item">Product Name</th>
+if (!empty($_SESSION['cart'])) {
+    ?>
+                                                                    <table class="table table-bordered">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th class="cart-romove item">Remove</th>
+                                                                                <th class="cart-description item">Image</th>
+                                                                                <th class="cart-product-name item">Product Name</th>
 
-                                            <th class="cart-qty item">Quantity</th>
-                                            <th class="cart-sub-total item">Price Per unit</th>
-                                            <th class="cart-sub-total item">Shipping Charge</th>
-                                            <th class="cart-total last-item">Grandtotal</th>
-                                        </tr>
-                                    </thead><!-- /thead -->
-                                    <tfoot>
-                                        <tr>
-                                            <td colspan="7">
-                                                <div class="shopping-cart-btn">
-                                                    <span class="">
-                                                        <a href="index.php"
-                                                            class="btn btn-upper btn-primary outer-left-xs">Continue
-                                                            Shopping</a>
-                                                        <input type="submit" name="submit" value="Update shopping cart"
-                                                            class="btn btn-upper btn-primary pull-right outer-right-xs">
-                                                    </span>
-                                                </div><!-- /.shopping-cart-btn -->
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                    <tbody>
-                                        <?php
- $pdtid=array();
+                                                                                <th class="cart-qty item">Quantity</th>
+                                                                                <th class="cart-sub-total item">Price Per unit</th>
+                                                                                <th class="cart-sub-total item">Shipping Charge</th>
+                                                                                <th class="cart-total last-item">Grandtotal</th>
+                                                                            </tr>
+                                                                        </thead><!-- /thead -->
+                                                                        <tfoot>
+                                                                            <tr>
+                                                                                <td colspan="7">
+                                                                                    <div class="shopping-cart-btn">
+                                                                                        <span class="">
+                                                                                            <a href="index.php"
+                                                                                                class="btn btn-upper btn-primary outer-left-xs">Continue
+                                                                                                Shopping</a>
+                                                                                            <input type="submit" name="submit" value="Update shopping cart"
+                                                                                                class="btn btn-upper btn-primary pull-right outer-right-xs">
+                                                                                        </span>
+                                                                                    </div><!-- /.shopping-cart-btn -->
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tfoot>
+                                                                        <tbody>
+                                                                            <?php
+$pdtid = array();
     $sql = "SELECT * FROM products WHERE id IN(";
-			foreach($_SESSION['cart'] as $id => $value){
-			$sql .=$id. ",";
-			}
-			$sql=substr($sql,0,-1) . ") ORDER BY id ASC";
-			$query = mysqli_query($con,$sql);
-			$totalprice=0;
-			$totalqunty=0;
-			if(!empty($query)){
-			while($row = mysqli_fetch_array($query)){
-				$quantity=$_SESSION['cart'][$row['id']]['quantity'];
-				$subtotal= $_SESSION['cart'][$row['id']]['quantity']*$row['productPrice']+$row['shippingCharge'];
-				$totalprice += $subtotal;
-				$_SESSION['qnty']=$totalqunty+=$quantity;
+    foreach ($_SESSION['cart'] as $id => $value) {
+        $sql .= $id . ",";
+    }
+    $sql = substr($sql, 0, -1) . ") ORDER BY id ASC";
+    $query = mysqli_query($con, $sql);
+    $totalprice = 0;
+    $totalqunty = 0;
+    if (!empty($query)) {
+        while ($row = mysqli_fetch_array($query)) {
+            $quantity = $_SESSION['cart'][$row['id']]['quantity'];
+            $subtotal = $_SESSION['cart'][$row['id']]['quantity'] * $row['productPrice'] + $row['shippingCharge'];
+            $totalprice += $subtotal;
+            $_SESSION['qnty'] = $totalqunty += $quantity;
 
-				array_push($pdtid,$row['id']);
-//print_r($_SESSION['pid'])=$pdtid;exit;
-	?>
+            array_push($pdtid, $row['id']);
+            //print_r($_SESSION['pid'])=$pdtid;exit;
+            ?>
 
                                         <tr>
                                             <td class="romove-item"><input type="checkbox" name="remove_code[]"
-                                                    value="<?php echo htmlentities($row['id']);?>" /></td>
+                                                    value="<?php echo htmlentities($row['id']); ?>" /></td>
                                             <td class="cart-image">
                                                 <a class="entry-thumbnail"
-                                                    href="product-details.php?pid=<?php echo htmlentities($pd=$row['id']);?>">
-                                                    <img src="admin/productimages/<?php echo $row['id'];?>/<?php echo $row['productImage1'];?>"
+                                                    href="product-details.php?pid=<?php echo htmlentities($pd = $row['id']); ?>">
+                                                    <img src="admin/productimages/<?php echo $row['id']; ?>/<?php echo $row['productImage1']; ?>"
                                                         alt="" width="114" height="114">
                                                 </a>
                                             </td>
                                             <td class="cart-product-name-info">
                                                 <h4 class='cart-product-description'><a
-                                                        href="product-details.php?pid=<?php echo htmlentities($pd=$row['id']);?>"><?php echo $row['productName'];
+                                                        href="product-details.php?pid=<?php echo htmlentities($pd = $row['id']); ?>"><?php echo $row['productName'];
 
-$_SESSION['sid']=$pd;
-						 ?></a></h4>
+            $_SESSION['sid'] = $pd;
+            ?></a></h4>
                                                 <div class="row">
                                                     <div class="col-sm-4">
                                                         <div class="rating rateit-small"></div>
                                                     </div>
                                                     <div class="col-sm-8">
-                                                        <?php $rt=mysqli_query($con,"select * from productreviews where productId='$pd'");
-$num=mysqli_num_rows($rt);
-{
-?>
+                                                        <?php $rt = mysqli_query($con, "select * from productreviews where productId='$pd'");
+            $num = mysqli_num_rows($rt);
+            {
+                ?>
                                                         <div class="reviews">
-                                                            ( <?php echo htmlentities($num);?> Reviews )
+                                                            ( <?php echo htmlentities($num); ?> Reviews )
                                                         </div>
-                                                        <?php } ?>
+                                                        <?php }?>
                                                     </div>
                                                 </div><!-- /.row -->
 
@@ -248,20 +304,20 @@ $num=mysqli_num_rows($rt);
                                                 </div>
                                             </td>
                                             <td class="cart-product-sub-total"><span
-                                                    class="cart-sub-total-price"><?php echo "&#8358;"." ".number_format($row['productPrice']); ?>.00</span>
+                                                    class="cart-sub-total-price"><?php echo "&#8358;" . " " . number_format($row['productPrice']); ?>.00</span>
                                             </td>
                                             <td class="cart-product-sub-total"><span
-                                                    class="cart-sub-total-price"><?php echo "&#8358;"." ".number_format($row['shippingCharge']); ?>.00</span>
+                                                    class="cart-sub-total-price"><?php echo "&#8358;" . " " . number_format($row['shippingCharge']); ?>.00</span>
                                             </td>
 
                                             <td class="cart-product-grand-total"><span
-                                                    class="cart-grand-total-price"><?php echo "&#8358;". number_format($_SESSION['cart'][$row['id']]['quantity']*$row['productPrice']+$row['shippingCharge']); ?>.00</span>
+                                                    class="cart-grand-total-price"><?php echo "&#8358;" . number_format($_SESSION['cart'][$row['id']]['quantity'] * $row['productPrice'] + $row['shippingCharge']); ?>.00</span>
                                             </td>
                                         </tr>
 
-                                        <?php } }
-$_SESSION['pid']=$pdtid;
-				?>
+                                        <?php }}
+    $_SESSION['pid'] = $pdtid;
+    ?>
 
                                     </tbody><!-- /tbody -->
                                 </table><!-- /table -->
@@ -284,16 +340,16 @@ $_SESSION['pid']=$pdtid;
                                 <tr>
                                     <td>
                                         <div class="form-group">
-                                            <?php $qry=mysqli_query($con,"select * from users where id='".$_SESSION['id']."'");
-													while ($rt=mysqli_fetch_array($qry)) {
-														echo htmlentities($rt['billingAddress'])."<br />";
-															echo htmlentities($rt['billingPincode'])."<br />";
-														echo htmlentities($rt['billingCity'])."<br />";
-														echo htmlentities($rt['billingState']);
-														
-													}
+                                            <?php $qry = mysqli_query($con, "select * from users where id='" . $_SESSION['id'] . "'");
+                                                while ($rt = mysqli_fetch_array($qry)) {
+                                                    echo htmlentities($rt['billingAddress']) . "<br />";
+                                                    echo htmlentities($rt['billingPincode']) . "<br />";
+                                                    echo htmlentities($rt['billingCity']) . "<br />";
+                                                    echo htmlentities($rt['billingState']);
 
-											?>
+                                                }
+
+                                            ?>
 
                                         </div>
 
@@ -310,41 +366,41 @@ $_SESSION['pid']=$pdtid;
 
                                         <div class="cart-grand-total">
                                             Grand Total<span
-                                                class="inner-left-md"><?php echo "&#8358; ". number_format($_SESSION['tp']="$totalprice"). ".00"; ?></span>
+                                                class="inner-left-md"><?php echo "&#8358; " . number_format($_SESSION['tp'] = "$totalprice") . ".00"; ?></span>
                                         </div>
                                     </th>
                                 </tr>
                             </thead><!-- /thead -->
 							</table>
-							
-							
+
+
 								<div class="form-group">
 									<label for="voucher">Have a Voucher?</label>
-									<input type="text" class="form-control" id="voucher">
+									<input type="text" class="form-control" name="voucher">
 								</div>
-								<button type="submit" class="btn btn-default">Apply Voucher</button>
-							
-							
-							
+								<button type="submit" name="applyvoucher" class="btn btn-default">Apply Voucher</button>
+
+
+
                           	<hr>
 							<div class="cart-checkout-btn pull-right">
 								<button type="submit" name="ordersubmit" class="btn btn-primary">PROCCED TO
 									CHEKOUT</button>
 
 							</div>
-                                    
-                       
+
+
                         <?php } else {
-							echo "Your shopping Cart is empty";
-						}?>
+    echo "Your shopping Cart is empty";
+}?>
                     </div>
                 </div>
             </div>
             </form>
-            <?php echo include('includes/brands-slider.php');?>
+            <?php echo include 'includes/brands-slider.php'; ?>
         </div>
     </div>
-    <?php include('includes/footer.php');?>
+    <?php include 'includes/footer.php';?>
 
     <script src="assets/js/jquery-1.11.1.min.js"></script>
 

@@ -55,6 +55,7 @@
           $referral = $user_row['referral'];
           
          
+      
 
           if($referral != Null){
             //credit the referral guy and give him a coupon

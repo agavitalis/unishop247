@@ -1,7 +1,7 @@
 <?php
 session_start();
 include_once 'includes/config.php';
-$oid=intval($_GET['oid']);
+$ocode=$_GET['ocode'];
  ?>
 <script language="javascript" type="text/javascript">
 function f2()
@@ -33,10 +33,14 @@ window.print();
     </tr>
     <tr height="30">
       <td  class="fontkink1"><b>order Id:</b></td>
-      <td  class="fontkink"><?php echo $oid;?></td>
+      <td  class="fontkink"><?php echo $ocode;?></td>
     </tr>
     <?php 
-$ret = mysqli_query($con,"SELECT * FROM ordertrackhistory WHERE orderId='$oid'");
+$ret = mysqli_query($con,"SELECT * FROM ordertrackhistory WHERE orderCode='$ocode'");
+
+if (!$ret) {
+  die("Error description: " . mysqli_error($con));
+}
 $num=mysqli_num_rows($ret);
 if($num>0)
 {
@@ -70,8 +74,11 @@ else{
    <td colspan="2">Order Not Process Yet</td>
    </tr>
    <?php  }
-$st='Delivered';
-   $rt = mysqli_query($con,"SELECT * FROM orders WHERE id='$oid'");
+    $st='Delivered';
+   $rt = mysqli_query($con,"SELECT * FROM orders WHERE orderCode='$ocode'");
+   if (!$rt) {
+    die("Error description: " . mysqli_error($con));
+  }
      while($num=mysqli_fetch_array($rt))
      {
      $currrentSt=$num['orderStatus'];
